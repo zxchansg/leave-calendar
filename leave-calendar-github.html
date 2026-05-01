@@ -75,13 +75,8 @@
             margin-right: 6px;
         }
 
-        .status-indicator.connected {
-            background: var(--success);
-        }
-
-        .status-indicator.disconnected {
-            background: var(--danger);
-        }
+        .status-indicator.connected { background: var(--success); }
+        .status-indicator.disconnected { background: var(--danger); }
 
         .main-grid {
             display: grid;
@@ -91,9 +86,7 @@
         }
 
         @media (max-width: 1024px) {
-            .main-grid {
-                grid-template-columns: 1fr;
-            }
+            .main-grid { grid-template-columns: 1fr; }
         }
 
         .form-section, .calendar-section {
@@ -135,7 +128,6 @@
             border-radius: 8px;
             font-size: 1rem;
             font-family: inherit;
-            transition: all 0.3s ease;
             background: var(--surface);
         }
 
@@ -160,7 +152,6 @@
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
             box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
         }
 
@@ -171,6 +162,43 @@
         .button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+        }
+
+        .leave-type-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .type-option {
+            padding: 12px 8px;
+            text-align: center;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            background: var(--surface);
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text);
+            transition: all 0.2s ease;
+        }
+
+        .type-option:hover {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .type-option.selected {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+        }
+
+        .type-option .icon {
+            font-size: 1.2rem;
+            display: block;
+            margin-bottom: 4px;
         }
 
         .calendar-header {
@@ -271,17 +299,9 @@
             font-weight: 500;
         }
 
-        .leave-badge.full {
-            background: var(--primary);
-        }
-
-        .leave-badge.am {
-            background: #f59e0b;
-        }
-
-        .leave-badge.pm {
-            background: #8b5cf6;
-        }
+        .leave-badge.full { background: var(--primary); }
+        .leave-badge.am { background: #f59e0b; }
+        .leave-badge.pm { background: #8b5cf6; }
 
         .leaves-section {
             margin-top: 40px;
@@ -339,20 +359,9 @@
             line-height: 1.5;
         }
 
-        .message.success {
-            background: var(--success);
-            color: white;
-        }
-
-        .message.error {
-            background: var(--danger);
-            color: white;
-        }
-
-        .message.loading {
-            background: var(--warning);
-            color: white;
-        }
+        .message.success { background: var(--success); color: white; }
+        .message.error { background: var(--danger); color: white; }
+        .message.loading { background: var(--warning); color: white; }
 
         .legend {
             display: flex;
@@ -373,6 +382,17 @@
             width: 12px;
             height: 12px;
             border-radius: 3px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .hint {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: -12px;
+            margin-bottom: 16px;
         }
     </style>
 </head>
@@ -398,34 +418,47 @@
                         <input type="text" id="name" required placeholder="e.g., Timothy Tan">
                     </div>
 
-                    <div class="form-group-row">
-                        <div>
-                            <label for="startDate">Start Date *</label>
-                            <input type="date" id="startDate" required>
-                        </div>
-                        <div>
-                            <label for="startHalf">Start Half *</label>
-                            <select id="startHalf" required>
-                                <option value="FULL">Full Day</option>
-                                <option value="AM">AM only</option>
-                                <option value="PM">PM only</option>
-                            </select>
+                    <!-- Leave Type Selector -->
+                    <div class="form-group">
+                        <label>Leave Type *</label>
+                        <div class="leave-type-options">
+                            <div class="type-option selected" data-type="FULL">
+                                <span class="icon">📅</span>
+                                Full Day(s)
+                            </div>
+                            <div class="type-option" data-type="AM">
+                                <span class="icon">🌅</span>
+                                AM Only
+                            </div>
+                            <div class="type-option" data-type="PM">
+                                <span class="icon">🌇</span>
+                                PM Only
+                            </div>
                         </div>
                     </div>
 
-                    <div class="form-group-row">
-                        <div>
-                            <label for="endDate">End Date *</label>
-                            <input type="date" id="endDate" required>
+                    <!-- Single Date (for AM/PM only) -->
+                    <div id="singleDateSection" class="hidden">
+                        <div class="form-group">
+                            <label for="singleDate">Date *</label>
+                            <input type="date" id="singleDate">
+                            <p class="hint" id="singleDateHint">Select the date for your half-day leave</p>
                         </div>
-                        <div>
-                            <label for="endHalf">End Half *</label>
-                            <select id="endHalf" required>
-                                <option value="FULL">Full Day</option>
-                                <option value="AM">AM only</option>
-                                <option value="PM">PM only</option>
-                            </select>
+                    </div>
+
+                    <!-- Date Range (for Full Day) -->
+                    <div id="dateRangeSection">
+                        <div class="form-group-row">
+                            <div>
+                                <label for="startDate">Start Date *</label>
+                                <input type="date" id="startDate">
+                            </div>
+                            <div>
+                                <label for="endDate">End Date *</label>
+                                <input type="date" id="endDate">
+                            </div>
                         </div>
+                        <p class="hint">For single full day, set both dates to the same day</p>
                     </div>
 
                     <div class="form-group">
@@ -471,14 +504,17 @@
 
         let leaves = [];
         let currentDate = new Date();
+        let selectedLeaveType = "FULL"; // FULL, AM, or PM
 
         const form = document.getElementById('leaveForm');
         const nameInput = document.getElementById('name');
+        const singleDateInput = document.getElementById('singleDate');
         const startDateInput = document.getElementById('startDate');
         const endDateInput = document.getElementById('endDate');
-        const startHalfInput = document.getElementById('startHalf');
-        const endHalfInput = document.getElementById('endHalf');
         const reasonInput = document.getElementById('reason');
+        const singleDateSection = document.getElementById('singleDateSection');
+        const dateRangeSection = document.getElementById('dateRangeSection');
+        const typeOptions = document.querySelectorAll('.type-option');
         const prevMonthBtn = document.getElementById('prevMonth');
         const nextMonthBtn = document.getElementById('nextMonth');
         const calendarGrid = document.getElementById('calendarGrid');
@@ -491,23 +527,76 @@
 
         loadLeavesFromSheet();
 
+        // Leave type selection
+        typeOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                typeOptions.forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                selectedLeaveType = option.dataset.type;
+                updateFormVisibility();
+            });
+        });
+
+        function updateFormVisibility() {
+            if (selectedLeaveType === 'FULL') {
+                // Show date range, hide single date
+                dateRangeSection.classList.remove('hidden');
+                singleDateSection.classList.add('hidden');
+            } else {
+                // Show single date, hide date range
+                dateRangeSection.classList.add('hidden');
+                singleDateSection.classList.remove('hidden');
+            }
+        }
+
         // Form submission
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            if (!nameInput.value || !startDateInput.value || !endDateInput.value) {
-                showMessage('Please fill in all required fields', 'error');
+            if (!nameInput.value) {
+                showMessage('Please enter your name', 'error');
                 return;
             }
 
-            const leaveData = {
-                name: nameInput.value,
-                startDate: startDateInput.value,
-                endDate: endDateInput.value,
-                startHalf: startHalfInput.value,
-                endHalf: endHalfInput.value,
-                reason: reasonInput.value
-            };
+            // Build leave data based on selected type
+            let leaveData;
+
+            if (selectedLeaveType === 'FULL') {
+                // Full day leave - need start and end dates
+                if (!startDateInput.value || !endDateInput.value) {
+                    showMessage('Please fill in both start and end dates', 'error');
+                    return;
+                }
+
+                if (new Date(startDateInput.value) > new Date(endDateInput.value)) {
+                    showMessage('End date must be after start date', 'error');
+                    return;
+                }
+
+                leaveData = {
+                    name: nameInput.value,
+                    startDate: startDateInput.value,
+                    endDate: endDateInput.value,
+                    startHalf: 'FULL',
+                    endHalf: 'FULL',
+                    reason: reasonInput.value
+                };
+            } else {
+                // AM or PM only - need single date
+                if (!singleDateInput.value) {
+                    showMessage('Please select a date', 'error');
+                    return;
+                }
+
+                leaveData = {
+                    name: nameInput.value,
+                    startDate: singleDateInput.value,
+                    endDate: singleDateInput.value,
+                    startHalf: selectedLeaveType,
+                    endHalf: selectedLeaveType,
+                    reason: reasonInput.value
+                };
+            }
 
             submitBtn.disabled = true;
             showMessage('Checking team calendar...', 'loading');
@@ -523,6 +612,11 @@
                 if (result.success) {
                     showMessage(`✅ Leave submitted successfully!`, 'success');
                     form.reset();
+                    // Reset to default
+                    typeOptions.forEach(o => o.classList.remove('selected'));
+                    typeOptions[0].classList.add('selected');
+                    selectedLeaveType = 'FULL';
+                    updateFormVisibility();
                     setTimeout(() => loadLeavesFromSheet(), 1000);
                 } else {
                     showMessage(result.error || 'Error submitting leave.', 'error');
@@ -546,7 +640,6 @@
                     statusText.textContent = `Connected - ${leaves.length} leave(s) found`;
                 }
             } catch (error) {
-                console.error('Error:', error);
                 statusIndicator.classList.remove('connected');
                 statusIndicator.classList.add('disconnected');
                 statusText.textContent = 'Connection error';
@@ -636,7 +729,7 @@
 
                     daysLeaves.forEach(leaveInfo => {
                         const badge = document.createElement('div');
-                        const halfType = leaveInfo.halfOnThisDay; // FULL, AM, or PM
+                        const halfType = leaveInfo.halfOnThisDay;
                         badge.className = 'leave-badge ' + halfType.toLowerCase();
                         
                         const firstName = leaveInfo.leave.name.split(' ')[0];
@@ -656,7 +749,6 @@
             return dayElement;
         }
 
-        // Calculate which leaves apply to a specific date and what half-type
         function getDaysLeaves(dateStr) {
             const result = [];
             const checkDate = new Date(dateStr);
@@ -670,31 +762,24 @@
                     leaveEnd.setHours(0, 0, 0, 0);
 
                     if (checkDate >= leaveStart && checkDate <= leaveEnd) {
-                        // Determine the half-type for THIS specific day
                         let halfOnThisDay = "FULL";
                         const isFirstDay = checkDate.getTime() === leaveStart.getTime();
                         const isLastDay = checkDate.getTime() === leaveEnd.getTime();
                         const isSameDay = isFirstDay && isLastDay;
                         
                         if (isSameDay) {
-                            // Single day leave
                             if (leave.startHalf === "AM" || leave.endHalf === "AM") halfOnThisDay = "AM";
                             else if (leave.startHalf === "PM" || leave.endHalf === "PM") halfOnThisDay = "PM";
                             else halfOnThisDay = "FULL";
                         } else if (isFirstDay) {
-                            // First day of multi-day leave
                             if (leave.startHalf === "PM") halfOnThisDay = "PM";
                             else halfOnThisDay = "FULL";
                         } else if (isLastDay) {
-                            // Last day of multi-day leave
                             if (leave.endHalf === "AM") halfOnThisDay = "AM";
                             else halfOnThisDay = "FULL";
                         }
                         
-                        result.push({
-                            leave: leave,
-                            halfOnThisDay: halfOnThisDay
-                        });
+                        result.push({ leave: leave, halfOnThisDay: halfOnThisDay });
                     }
                 } catch (e) {
                     console.error(e);
@@ -721,18 +806,15 @@
                 const startDate = new Date(leave.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                 const endDate = new Date(leave.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                 
-                // Format half-day display
                 const startHalf = leave.startHalf || 'FULL';
                 const endHalf = leave.endHalf || 'FULL';
                 
                 let dateDisplay = '';
                 if (leave.startDate === leave.endDate) {
-                    // Single day
                     if (startHalf === 'AM' || endHalf === 'AM') dateDisplay = `${startDate} (AM only)`;
                     else if (startHalf === 'PM' || endHalf === 'PM') dateDisplay = `${startDate} (PM only)`;
                     else dateDisplay = `${startDate} (Full day)`;
                 } else {
-                    // Multi-day
                     const startStr = startHalf === 'PM' ? `${startDate} (from PM)` : startDate;
                     const endStr = endHalf === 'AM' ? `${endDate} (until AM)` : endDate;
                     dateDisplay = `${startStr} → ${endStr}`;
