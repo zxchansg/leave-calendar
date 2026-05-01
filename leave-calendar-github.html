@@ -43,7 +43,6 @@
         header {
             text-align: center;
             margin-bottom: 40px;
-            animation: slideDown 0.6s ease-out;
         }
 
         h1 {
@@ -74,7 +73,6 @@
             height: 10px;
             border-radius: 50%;
             margin-right: 6px;
-            animation: pulse 2s infinite;
         }
 
         .status-indicator.connected {
@@ -83,12 +81,6 @@
 
         .status-indicator.disconnected {
             background: var(--danger);
-            animation: none;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
         }
 
         .main-grid {
@@ -104,22 +96,27 @@
             }
         }
 
-        /* Form Section */
-        .form-section {
+        .form-section, .calendar-section {
             background: var(--surface);
             border-radius: 12px;
             padding: 30px;
             box-shadow: var(--shadow-lg);
-            animation: slideUp 0.6s ease-out 0.1s both;
         }
 
-        .form-section h2 {
+        .form-section h2, .calendar-section h2 {
             font-size: 1.5rem;
             margin-bottom: 24px;
             color: var(--text);
         }
 
         .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
             margin-bottom: 20px;
         }
 
@@ -150,7 +147,7 @@
 
         textarea {
             resize: vertical;
-            min-height: 100px;
+            min-height: 80px;
         }
 
         .button {
@@ -169,25 +166,11 @@
 
         .button:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4);
         }
 
         .button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
-        }
-
-        .button:active:not(:disabled) {
-            transform: translateY(0);
-        }
-
-        /* Calendar Section */
-        .calendar-section {
-            background: var(--surface);
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: var(--shadow-lg);
-            animation: slideUp 0.6s ease-out 0.2s both;
         }
 
         .calendar-header {
@@ -197,14 +180,10 @@
             margin-bottom: 24px;
         }
 
-        .calendar-header h2 {
-            font-size: 1.5rem;
-            color: var(--text);
-        }
-
         .month-nav {
             display: flex;
             gap: 12px;
+            align-items: center;
         }
 
         .nav-btn {
@@ -214,7 +193,6 @@
             border-radius: 6px;
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.3s ease;
             color: var(--text);
         }
 
@@ -227,12 +205,10 @@
         .month-display {
             font-size: 1.2rem;
             font-weight: 600;
-            color: var(--text);
             min-width: 150px;
             text-align: center;
         }
 
-        /* Calendar Grid */
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -247,7 +223,6 @@
             padding: 12px 0;
             font-size: 0.9rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         .calendar-day {
@@ -259,14 +234,7 @@
             min-height: 100px;
             display: flex;
             flex-direction: column;
-            position: relative;
             overflow: hidden;
-            cursor: default;
-            transition: all 0.3s ease;
-        }
-
-        .calendar-day:hover {
-            border-color: var(--primary);
         }
 
         .calendar-day.other-month {
@@ -281,7 +249,6 @@
 
         .day-number {
             font-weight: 700;
-            color: var(--text);
             font-size: 0.95rem;
             margin-bottom: 4px;
         }
@@ -291,13 +258,12 @@
             flex-direction: column;
             gap: 3px;
             flex: 1;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
         }
 
         .leave-badge {
             padding: 3px 6px;
             border-radius: 4px;
-            background: var(--primary);
             color: white;
             white-space: nowrap;
             overflow: hidden;
@@ -305,20 +271,29 @@
             font-weight: 500;
         }
 
-        /* Leaves List */
+        .leave-badge.full {
+            background: var(--primary);
+        }
+
+        .leave-badge.am {
+            background: #f59e0b;
+        }
+
+        .leave-badge.pm {
+            background: #8b5cf6;
+        }
+
         .leaves-section {
             margin-top: 40px;
             background: var(--surface);
             border-radius: 12px;
             padding: 30px;
             box-shadow: var(--shadow-lg);
-            animation: slideUp 0.6s ease-out 0.3s both;
         }
 
         .leaves-section h2 {
             font-size: 1.5rem;
             margin-bottom: 24px;
-            color: var(--text);
         }
 
         .leave-list {
@@ -332,15 +307,10 @@
             background: var(--bg);
             border-left: 4px solid var(--primary);
             border-radius: 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            animation: slideIn 0.4s ease-out;
         }
 
         .leave-info h3 {
             font-size: 1rem;
-            color: var(--text);
             margin-bottom: 4px;
         }
 
@@ -361,15 +331,10 @@
             color: var(--text-light);
         }
 
-        .empty-state p {
-            font-size: 1.1rem;
-        }
-
         .message {
             padding: 12px 16px;
             border-radius: 6px;
             margin-bottom: 20px;
-            animation: slideIn 0.4s ease-out;
             white-space: pre-wrap;
             line-height: 1.5;
         }
@@ -389,38 +354,25 @@
             color: white;
         }
 
-        /* Animations */
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .legend {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 12px;
         }
 
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
         }
     </style>
 </head>
@@ -446,14 +398,34 @@
                         <input type="text" id="name" required placeholder="e.g., Timothy Tan">
                     </div>
 
-                    <div class="form-group">
-                        <label for="startDate">Start Date *</label>
-                        <input type="date" id="startDate" required>
+                    <div class="form-group-row">
+                        <div>
+                            <label for="startDate">Start Date *</label>
+                            <input type="date" id="startDate" required>
+                        </div>
+                        <div>
+                            <label for="startHalf">Start Half *</label>
+                            <select id="startHalf" required>
+                                <option value="FULL">Full Day</option>
+                                <option value="AM">AM only</option>
+                                <option value="PM">PM only</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="endDate">End Date *</label>
-                        <input type="date" id="endDate" required>
+                    <div class="form-group-row">
+                        <div>
+                            <label for="endDate">End Date *</label>
+                            <input type="date" id="endDate" required>
+                        </div>
+                        <div>
+                            <label for="endHalf">End Half *</label>
+                            <select id="endHalf" required>
+                                <option value="FULL">Full Day</option>
+                                <option value="AM">AM only</option>
+                                <option value="PM">PM only</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -475,6 +447,11 @@
                     </div>
                 </div>
                 <div class="calendar-grid" id="calendarGrid"></div>
+                <div class="legend">
+                    <div class="legend-item"><span class="legend-dot" style="background: #2563eb;"></span>Full Day</div>
+                    <div class="legend-item"><span class="legend-dot" style="background: #f59e0b;"></span>AM only</div>
+                    <div class="legend-item"><span class="legend-dot" style="background: #8b5cf6;"></span>PM only</div>
+                </div>
             </div>
         </div>
 
@@ -499,6 +476,8 @@
         const nameInput = document.getElementById('name');
         const startDateInput = document.getElementById('startDate');
         const endDateInput = document.getElementById('endDate');
+        const startHalfInput = document.getElementById('startHalf');
+        const endHalfInput = document.getElementById('endHalf');
         const reasonInput = document.getElementById('reason');
         const prevMonthBtn = document.getElementById('prevMonth');
         const nextMonthBtn = document.getElementById('nextMonth');
@@ -510,7 +489,6 @@
         const statusText = document.getElementById('statusText');
         const submitBtn = document.getElementById('submitBtn');
 
-        // Load leaves on page load
         loadLeavesFromSheet();
 
         // Form submission
@@ -526,6 +504,8 @@
                 name: nameInput.value,
                 startDate: startDateInput.value,
                 endDate: endDateInput.value,
+                startHalf: startHalfInput.value,
+                endHalf: endHalfInput.value,
                 reason: reasonInput.value
             };
 
@@ -541,17 +521,14 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    // No overlap found - success
-                    showMessage(`✅ Leave submitted for ${leaveData.startDate} to ${leaveData.endDate}!`, 'success');
+                    showMessage(`✅ Leave submitted successfully!`, 'success');
                     form.reset();
                     setTimeout(() => loadLeavesFromSheet(), 1000);
                 } else {
-                    // Overlap found - BLOCKED
-                    showMessage(result.error || 'Error submitting leave. Please try again.', 'error');
+                    showMessage(result.error || 'Error submitting leave.', 'error');
                 }
             } catch (error) {
                 showMessage(`❌ Error: ${error.message}`, 'error');
-                console.error(error);
             } finally {
                 submitBtn.disabled = false;
             }
@@ -567,11 +544,9 @@
                     statusIndicator.classList.remove('disconnected');
                     statusIndicator.classList.add('connected');
                     statusText.textContent = `Connected - ${leaves.length} leave(s) found`;
-                } else {
-                    console.error('Invalid data format');
                 }
             } catch (error) {
-                console.error('Error loading leaves:', error);
+                console.error('Error:', error);
                 statusIndicator.classList.remove('connected');
                 statusIndicator.classList.add('disconnected');
                 statusText.textContent = 'Connection error';
@@ -584,13 +559,10 @@
         function showMessage(message, type) {
             messageContainer.innerHTML = `<div class="message ${type}">${message}</div>`;
             if (type === 'success') {
-                setTimeout(() => {
-                    messageContainer.innerHTML = '';
-                }, 4000);
+                setTimeout(() => { messageContainer.innerHTML = ''; }, 4000);
             }
         }
 
-        // Month navigation
         prevMonthBtn.addEventListener('click', () => {
             currentDate.setMonth(currentDate.getMonth() - 1);
             renderCalendar();
@@ -601,7 +573,6 @@
             renderCalendar();
         });
 
-        // Render calendar
         function renderCalendar() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
@@ -623,20 +594,17 @@
             const daysInPrevMonth = new Date(year, month, 0).getDate();
 
             for (let i = firstDay - 1; i >= 0; i--) {
-                const dayElement = createDayElement(daysInPrevMonth - i, true);
-                calendarGrid.appendChild(dayElement);
+                calendarGrid.appendChild(createDayElement(daysInPrevMonth - i, true));
             }
 
             for (let i = 1; i <= daysInMonth; i++) {
-                const dayElement = createDayElement(i, false, year, month);
-                calendarGrid.appendChild(dayElement);
+                calendarGrid.appendChild(createDayElement(i, false, year, month));
             }
 
             const totalCells = calendarGrid.children.length - 7;
             const remainingCells = 42 - totalCells;
             for (let i = 1; i <= remainingCells; i++) {
-                const dayElement = createDayElement(i, true);
-                calendarGrid.appendChild(dayElement);
+                calendarGrid.appendChild(createDayElement(i, true));
             }
         }
 
@@ -666,11 +634,18 @@
                     const leavesDiv = document.createElement('div');
                     leavesDiv.className = 'day-leaves';
 
-                    daysLeaves.forEach(leave => {
+                    daysLeaves.forEach(leaveInfo => {
                         const badge = document.createElement('div');
-                        badge.className = 'leave-badge';
-                        badge.textContent = leave.name.split(' ')[0];
-                        badge.title = leave.name;
+                        const halfType = leaveInfo.halfOnThisDay; // FULL, AM, or PM
+                        badge.className = 'leave-badge ' + halfType.toLowerCase();
+                        
+                        const firstName = leaveInfo.leave.name.split(' ')[0];
+                        if (halfType === 'FULL') {
+                            badge.textContent = firstName;
+                        } else {
+                            badge.textContent = `${firstName} (${halfType})`;
+                        }
+                        badge.title = `${leaveInfo.leave.name} - ${halfType}`;
                         leavesDiv.appendChild(badge);
                     });
 
@@ -681,26 +656,59 @@
             return dayElement;
         }
 
+        // Calculate which leaves apply to a specific date and what half-type
         function getDaysLeaves(dateStr) {
-            return leaves.filter(leave => {
+            const result = [];
+            const checkDate = new Date(dateStr);
+            checkDate.setHours(0, 0, 0, 0);
+            
+            leaves.forEach(leave => {
                 try {
                     const leaveStart = new Date(leave.startDate);
                     const leaveEnd = new Date(leave.endDate);
-                    const checkDate = new Date(dateStr);
+                    leaveStart.setHours(0, 0, 0, 0);
+                    leaveEnd.setHours(0, 0, 0, 0);
 
-                    return checkDate >= leaveStart && checkDate <= leaveEnd;
+                    if (checkDate >= leaveStart && checkDate <= leaveEnd) {
+                        // Determine the half-type for THIS specific day
+                        let halfOnThisDay = "FULL";
+                        const isFirstDay = checkDate.getTime() === leaveStart.getTime();
+                        const isLastDay = checkDate.getTime() === leaveEnd.getTime();
+                        const isSameDay = isFirstDay && isLastDay;
+                        
+                        if (isSameDay) {
+                            // Single day leave
+                            if (leave.startHalf === "AM" || leave.endHalf === "AM") halfOnThisDay = "AM";
+                            else if (leave.startHalf === "PM" || leave.endHalf === "PM") halfOnThisDay = "PM";
+                            else halfOnThisDay = "FULL";
+                        } else if (isFirstDay) {
+                            // First day of multi-day leave
+                            if (leave.startHalf === "PM") halfOnThisDay = "PM";
+                            else halfOnThisDay = "FULL";
+                        } else if (isLastDay) {
+                            // Last day of multi-day leave
+                            if (leave.endHalf === "AM") halfOnThisDay = "AM";
+                            else halfOnThisDay = "FULL";
+                        }
+                        
+                        result.push({
+                            leave: leave,
+                            halfOnThisDay: halfOnThisDay
+                        });
+                    }
                 } catch (e) {
-                    return false;
+                    console.error(e);
                 }
             });
+            
+            return result;
         }
 
-        // Render leaves list
         function renderLeavesList() {
             leavesList.innerHTML = '';
 
             if (leaves.length === 0) {
-                leavesList.innerHTML = '<div class="empty-state"><p>No leave requests yet. Be the first to apply! 🎉</p></div>';
+                leavesList.innerHTML = '<div class="empty-state"><p>No leave requests yet.</p></div>';
                 return;
             }
 
@@ -712,12 +720,28 @@
 
                 const startDate = new Date(leave.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                 const endDate = new Date(leave.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                const dayCount = Math.ceil((new Date(leave.endDate) - new Date(leave.startDate)) / (1000 * 60 * 60 * 24)) + 1;
+                
+                // Format half-day display
+                const startHalf = leave.startHalf || 'FULL';
+                const endHalf = leave.endHalf || 'FULL';
+                
+                let dateDisplay = '';
+                if (leave.startDate === leave.endDate) {
+                    // Single day
+                    if (startHalf === 'AM' || endHalf === 'AM') dateDisplay = `${startDate} (AM only)`;
+                    else if (startHalf === 'PM' || endHalf === 'PM') dateDisplay = `${startDate} (PM only)`;
+                    else dateDisplay = `${startDate} (Full day)`;
+                } else {
+                    // Multi-day
+                    const startStr = startHalf === 'PM' ? `${startDate} (from PM)` : startDate;
+                    const endStr = endHalf === 'AM' ? `${endDate} (until AM)` : endDate;
+                    dateDisplay = `${startStr} → ${endStr}`;
+                }
 
                 leaveElement.innerHTML = `
                     <div class="leave-info">
                         <h3>${leave.name}</h3>
-                        <div class="leave-dates">📅 ${startDate} → ${endDate} (${dayCount} day${dayCount > 1 ? 's' : ''})</div>
+                        <div class="leave-dates">📅 ${dateDisplay}</div>
                         ${leave.reason ? `<div class="leave-reason">${leave.reason}</div>` : ''}
                     </div>
                 `;
@@ -726,12 +750,8 @@
             });
         }
 
-        // Auto-refresh leaves every 10 seconds
-        setInterval(() => {
-            loadLeavesFromSheet();
-        }, 10000);
+        setInterval(() => { loadLeavesFromSheet(); }, 10000);
 
-        // Initial render
         renderCalendar();
         renderLeavesList();
     </script>
