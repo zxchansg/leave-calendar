@@ -389,12 +389,6 @@
             color: white;
         }
 
-        .message.warning {
-            background: #f97316;
-            color: white;
-            border-left: 4px solid #ea580c;
-        }
-
         /* Animations */
         @keyframes slideDown {
             from {
@@ -493,13 +487,9 @@
 
     <script>
         // ============================================
-        // CONFIGURATION - UPDATE THIS WITH YOUR URL
+        // CONFIGURATION - YOUR DEPLOYMENT URL
         // ============================================
-        // Replace the URL below with your Google Apps Script deployment URL
-        // Example: https://script.google.com/macros/d/AKfycbx.../usercodeapps
-        
         const DEPLOYMENT_URL = "https://script.google.com/macros/s/AKfycbztN4xEyq_zVmR_CtkvKg9oIl7XCq66JwkdCgmlnIv61V1h_8gxnp8brC-XOryfKRfu/exec";
-        
         // ============================================
 
         let leaves = [];
@@ -520,16 +510,8 @@
         const statusText = document.getElementById('statusText');
         const submitBtn = document.getElementById('submitBtn');
 
-        // Check if deployment URL is configured
-        if (DEPLOYMENT_URL.includes("YOUR_DEPLOYMENT_URL")) {
-            showMessage('❌ Deployment URL not configured. Contact your administrator.', 'error');
-            submitBtn.disabled = true;
-            statusIndicator.classList.remove('connected');
-            statusIndicator.classList.add('disconnected');
-            statusText.textContent = 'Configuration error';
-        } else {
-            loadLeavesFromSheet();
-        }
+        // Load leaves on page load
+        loadLeavesFromSheet();
 
         // Form submission
         form.addEventListener('submit', async (e) => {
@@ -559,19 +541,13 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    // Check if there are conflicts
-                    if (result.hasConflicts) {
-                        // Show warning but still allow submission
-                        showMessage(result.message, 'warning');
-                    } else {
-                        // No conflicts - show success
-                        showMessage(`✅ Leave submitted for ${leaveData.startDate} to ${leaveData.endDate}!`, 'success');
-                    }
-                    
+                    // No overlap found - success
+                    showMessage(`✅ Leave submitted for ${leaveData.startDate} to ${leaveData.endDate}!`, 'success');
                     form.reset();
                     setTimeout(() => loadLeavesFromSheet(), 1000);
                 } else {
-                    showMessage(`❌ ${result.error || 'Error submitting leave. Please try again.'}`, 'error');
+                    // Overlap found - BLOCKED
+                    showMessage(result.error || 'Error submitting leave. Please try again.', 'error');
                 }
             } catch (error) {
                 showMessage(`❌ Error: ${error.message}`, 'error');
