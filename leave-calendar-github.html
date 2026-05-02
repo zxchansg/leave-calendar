@@ -5,11 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SNEC Team Leave Calendar</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
             --primary: #2563eb;
@@ -23,22 +19,18 @@
             --border: #e2e8f0;
             --text: #1e293b;
             --text-light: #64748b;
-            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             color: var(--text);
             padding: 20px;
             min-height: 100vh;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+        .container { max-width: 1200px; margin: 0 auto; }
 
         header {
             text-align: center;
@@ -55,10 +47,7 @@
             background-clip: text;
         }
 
-        .subtitle {
-            color: var(--text-light);
-            font-size: 1rem;
-        }
+        .subtitle { color: var(--text-light); font-size: 1rem; }
 
         .status-bar {
             text-align: center;
@@ -89,22 +78,79 @@
             .main-grid { grid-template-columns: 1fr; }
         }
 
-        .form-section, .calendar-section {
+        .form-section, .calendar-section, .leaves-section {
             background: var(--surface);
             border-radius: 12px;
             padding: 30px;
             box-shadow: var(--shadow-lg);
         }
 
-        .form-section h2, .calendar-section h2 {
+        .form-section h2, .calendar-section h2, .leaves-section h2 {
             font-size: 1.5rem;
             margin-bottom: 24px;
             color: var(--text);
         }
 
-        .form-group {
-            margin-bottom: 20px;
+        /* ========== TWO BIG TOGGLE BUTTONS ========== */
+        .mode-toggle {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 28px;
+            padding: 6px;
+            background: var(--bg);
+            border-radius: 12px;
         }
+
+        .mode-button {
+            padding: 16px 12px;
+            text-align: center;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-light);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-height: 80px;
+        }
+
+        .mode-button .mode-icon {
+            font-size: 1.8rem;
+            line-height: 1;
+        }
+
+        .mode-button .mode-label {
+            font-size: 0.95rem;
+        }
+
+        .mode-button:hover {
+            background: rgba(37, 99, 235, 0.05);
+            color: var(--primary);
+        }
+
+        .mode-button.active.new-mode {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .mode-button.active.cancel-mode {
+            background: linear-gradient(135deg, var(--danger) 0%, #f97316 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+            transform: translateY(-1px);
+        }
+
+        /* ========== FORM STYLES ========== */
+        .form-group { margin-bottom: 20px; }
 
         .form-group-row {
             display: grid;
@@ -137,10 +183,7 @@
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
-        textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
+        textarea { resize: vertical; min-height: 80px; }
 
         .button {
             width: 100%;
@@ -155,13 +198,12 @@
             box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
         }
 
-        .button:hover:not(:disabled) {
-            transform: translateY(-2px);
-        }
+        .button:hover:not(:disabled) { transform: translateY(-2px); }
+        .button:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        .button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
+        .button-danger {
+            background: linear-gradient(135deg, var(--danger) 0%, #f97316 100%);
+            box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
         }
 
         .leave-type-options {
@@ -181,7 +223,6 @@
             font-weight: 600;
             font-size: 0.9rem;
             color: var(--text);
-            transition: all 0.2s ease;
         }
 
         .type-option:hover {
@@ -201,6 +242,7 @@
             margin-bottom: 4px;
         }
 
+        /* ========== CALENDAR ========== */
         .calendar-header {
             display: flex;
             justify-content: space-between;
@@ -271,9 +313,7 @@
             border-color: transparent;
         }
 
-        .calendar-day.weekend {
-            background: rgba(226, 232, 240, 0.5);
-        }
+        .calendar-day.weekend { background: rgba(226, 232, 240, 0.5); }
 
         .day-number {
             font-weight: 700;
@@ -303,18 +343,8 @@
         .leave-badge.am { background: #f59e0b; }
         .leave-badge.pm { background: #8b5cf6; }
 
-        .leaves-section {
-            margin-top: 40px;
-            background: var(--surface);
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: var(--shadow-lg);
-        }
-
-        .leaves-section h2 {
-            font-size: 1.5rem;
-            margin-bottom: 24px;
-        }
+        /* ========== LEAVES LIST ========== */
+        .leaves-section { margin-top: 40px; }
 
         .leave-list {
             display: flex;
@@ -329,10 +359,7 @@
             border-radius: 6px;
         }
 
-        .leave-info h3 {
-            font-size: 1rem;
-            margin-bottom: 4px;
-        }
+        .leave-info h3 { font-size: 1rem; margin-bottom: 4px; }
 
         .leave-dates {
             color: var(--text-light);
@@ -384,9 +411,7 @@
             border-radius: 3px;
         }
 
-        .hidden {
-            display: none !important;
-        }
+        .hidden { display: none !important; }
 
         .hint {
             font-size: 0.85rem;
@@ -394,13 +419,83 @@
             margin-top: -12px;
             margin-bottom: 16px;
         }
+
+        /* ========== MODAL ========== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-content h3 {
+            font-size: 1.3rem;
+            margin-bottom: 16px;
+            color: var(--danger);
+        }
+
+        .modal-content p {
+            margin-bottom: 24px;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .modal-content .leave-summary {
+            background: #fef2f2;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid var(--danger);
+            margin-bottom: 24px;
+            font-size: 0.95rem;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn-cancel {
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .btn-confirm-delete {
+            background: var(--danger);
+            color: white;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
             <h1>🗓️ SNEC Team Leave Calendar</h1>
-            <p class="subtitle">Check team schedule and apply for leave</p>
+            <p class="subtitle">Check team schedule and manage leave</p>
             <div class="status-bar">
                 <span class="status-indicator connected" id="statusIndicator"></span>
                 <span id="statusText">Connecting...</span>
@@ -410,15 +505,27 @@
         <div class="main-grid">
             <!-- Form Section -->
             <div class="form-section">
-                <h2>Apply for Leave</h2>
+                <!-- TWO BIG TOGGLE BUTTONS -->
+                <div class="mode-toggle">
+                    <button class="mode-button new-mode active" id="modeNew">
+                        <span class="mode-icon">📝</span>
+                        <span class="mode-label">New Leave Request</span>
+                    </button>
+                    <button class="mode-button cancel-mode" id="modeCancel">
+                        <span class="mode-icon">❌</span>
+                        <span class="mode-label">Cancel Existing Leave</span>
+                    </button>
+                </div>
+
                 <div id="messageContainer"></div>
+
+                <!-- ========== NEW LEAVE REQUEST FORM ========== -->
                 <form id="leaveForm">
                     <div class="form-group">
                         <label for="name">Your Name *</label>
-                        <input type="text" id="name" required placeholder="e.g., Timothy Tan">
+                        <input type="text" id="name" placeholder="e.g., Timothy Tan">
                     </div>
 
-                    <!-- Leave Type Selector -->
                     <div class="form-group">
                         <label>Leave Type *</label>
                         <div class="leave-type-options">
@@ -437,16 +544,14 @@
                         </div>
                     </div>
 
-                    <!-- Single Date (for AM/PM only) -->
                     <div id="singleDateSection" class="hidden">
                         <div class="form-group">
                             <label for="singleDate">Date *</label>
                             <input type="date" id="singleDate">
-                            <p class="hint" id="singleDateHint">Select the date for your half-day leave</p>
+                            <p class="hint">Select the date for your half-day leave</p>
                         </div>
                     </div>
 
-                    <!-- Date Range (for Full Day) -->
                     <div id="dateRangeSection">
                         <div class="form-group-row">
                             <div>
@@ -468,6 +573,25 @@
 
                     <button type="submit" class="button" id="submitBtn">Submit Leave Request</button>
                 </form>
+
+                <!-- ========== CANCEL LEAVE FORM ========== -->
+                <div id="cancelForm" class="hidden">
+                    <div class="form-group">
+                        <label for="cancelName">Step 1: Select your name *</label>
+                        <select id="cancelName">
+                            <option value="">-- Select your name --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group hidden" id="leaveSelectGroup">
+                        <label for="cancelLeaveId">Step 2: Select the leave to cancel *</label>
+                        <select id="cancelLeaveId">
+                            <option value="">-- Select leave to cancel --</option>
+                        </select>
+                    </div>
+
+                    <button class="button button-danger hidden" id="cancelBtn" disabled>Cancel Leave</button>
+                </div>
             </div>
 
             <!-- Calendar Section -->
@@ -495,6 +619,20 @@
         </div>
     </div>
 
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay hidden" id="confirmModal">
+        <div class="modal-content">
+            <h3>⚠️ Are you sure?</h3>
+            <p>You are about to cancel the following leave:</p>
+            <div class="leave-summary" id="modalLeaveSummary"></div>
+            <p>This action <strong>cannot be undone</strong>. An email notification will be sent to the team.</p>
+            <div class="modal-buttons">
+                <button class="btn-cancel" id="modalCancelBtn">No, Keep It</button>
+                <button class="btn-confirm-delete" id="modalConfirmBtn">Yes, Cancel Leave</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ============================================
         // CONFIGURATION - YOUR DEPLOYMENT URL
@@ -504,9 +642,19 @@
 
         let leaves = [];
         let currentDate = new Date();
-        let selectedLeaveType = "FULL"; // FULL, AM, or PM
+        let selectedLeaveType = "FULL";
+        let currentMode = "new"; // "new" or "cancel"
 
-        const form = document.getElementById('leaveForm');
+        // Mode toggle elements
+        const modeNewBtn = document.getElementById('modeNew');
+        const modeCancelBtn = document.getElementById('modeCancel');
+        
+        // Form elements
+        const leaveForm = document.getElementById('leaveForm');
+        const cancelForm = document.getElementById('cancelForm');
+        const messageContainer = document.getElementById('messageContainer');
+        
+        // Submit form elements
         const nameInput = document.getElementById('name');
         const singleDateInput = document.getElementById('singleDate');
         const startDateInput = document.getElementById('startDate');
@@ -515,17 +663,57 @@
         const singleDateSection = document.getElementById('singleDateSection');
         const dateRangeSection = document.getElementById('dateRangeSection');
         const typeOptions = document.querySelectorAll('.type-option');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        // Cancel form elements
+        const cancelNameSelect = document.getElementById('cancelName');
+        const cancelLeaveIdSelect = document.getElementById('cancelLeaveId');
+        const leaveSelectGroup = document.getElementById('leaveSelectGroup');
+        const cancelBtn = document.getElementById('cancelBtn');
+        
+        // Modal elements
+        const confirmModal = document.getElementById('confirmModal');
+        const modalLeaveSummary = document.getElementById('modalLeaveSummary');
+        const modalCancelBtn = document.getElementById('modalCancelBtn');
+        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+        
+        // Calendar elements
         const prevMonthBtn = document.getElementById('prevMonth');
         const nextMonthBtn = document.getElementById('nextMonth');
         const calendarGrid = document.getElementById('calendarGrid');
         const monthDisplay = document.getElementById('monthDisplay');
         const leavesList = document.getElementById('leavesList');
-        const messageContainer = document.getElementById('messageContainer');
         const statusIndicator = document.getElementById('statusIndicator');
         const statusText = document.getElementById('statusText');
-        const submitBtn = document.getElementById('submitBtn');
 
         loadLeavesFromSheet();
+
+        // ========== MODE TOGGLE ==========
+        modeNewBtn.addEventListener('click', () => switchMode('new'));
+        modeCancelBtn.addEventListener('click', () => switchMode('cancel'));
+
+        function switchMode(mode) {
+            currentMode = mode;
+            messageContainer.innerHTML = '';
+            
+            if (mode === 'new') {
+                modeNewBtn.classList.add('active');
+                modeCancelBtn.classList.remove('active');
+                leaveForm.classList.remove('hidden');
+                cancelForm.classList.add('hidden');
+            } else {
+                modeNewBtn.classList.remove('active');
+                modeCancelBtn.classList.add('active');
+                leaveForm.classList.add('hidden');
+                cancelForm.classList.remove('hidden');
+                
+                // Reset cancel form
+                cancelNameSelect.value = '';
+                cancelLeaveIdSelect.innerHTML = '<option value="">-- Select leave to cancel --</option>';
+                leaveSelectGroup.classList.add('hidden');
+                cancelBtn.classList.add('hidden');
+            }
+        }
 
         // Leave type selection
         typeOptions.forEach(option => {
@@ -539,18 +727,16 @@
 
         function updateFormVisibility() {
             if (selectedLeaveType === 'FULL') {
-                // Show date range, hide single date
                 dateRangeSection.classList.remove('hidden');
                 singleDateSection.classList.add('hidden');
             } else {
-                // Show single date, hide date range
                 dateRangeSection.classList.add('hidden');
                 singleDateSection.classList.remove('hidden');
             }
         }
 
-        // Form submission
-        form.addEventListener('submit', async (e) => {
+        // ========== NEW LEAVE SUBMISSION ==========
+        leaveForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             if (!nameInput.value) {
@@ -558,11 +744,9 @@
                 return;
             }
 
-            // Build leave data based on selected type
             let leaveData;
 
             if (selectedLeaveType === 'FULL') {
-                // Full day leave - need start and end dates
                 if (!startDateInput.value || !endDateInput.value) {
                     showMessage('Please fill in both start and end dates', 'error');
                     return;
@@ -574,6 +758,7 @@
                 }
 
                 leaveData = {
+                    action: 'submit',
                     name: nameInput.value,
                     startDate: startDateInput.value,
                     endDate: endDateInput.value,
@@ -582,13 +767,13 @@
                     reason: reasonInput.value
                 };
             } else {
-                // AM or PM only - need single date
                 if (!singleDateInput.value) {
                     showMessage('Please select a date', 'error');
                     return;
                 }
 
                 leaveData = {
+                    action: 'submit',
                     name: nameInput.value,
                     startDate: singleDateInput.value,
                     endDate: singleDateInput.value,
@@ -611,8 +796,7 @@
 
                 if (result.success) {
                     showMessage(`✅ Leave submitted successfully!`, 'success');
-                    form.reset();
-                    // Reset to default
+                    leaveForm.reset();
                     typeOptions.forEach(o => o.classList.remove('selected'));
                     typeOptions[0].classList.add('selected');
                     selectedLeaveType = 'FULL';
@@ -628,6 +812,104 @@
             }
         });
 
+        // ========== CANCEL LEAVE LOGIC ==========
+        cancelNameSelect.addEventListener('change', () => {
+            const selectedName = cancelNameSelect.value;
+            
+            cancelLeaveIdSelect.innerHTML = '<option value="">-- Select leave to cancel --</option>';
+            cancelBtn.classList.add('hidden');
+            cancelBtn.disabled = true;
+            
+            if (!selectedName) {
+                leaveSelectGroup.classList.add('hidden');
+                return;
+            }
+
+            leaveSelectGroup.classList.remove('hidden');
+
+            const personLeaves = leaves.filter(l => l.name === selectedName);
+            
+            personLeaves.forEach(leave => {
+                const option = document.createElement('option');
+                option.value = leave.id;
+                
+                const startDate = new Date(leave.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const endDate = new Date(leave.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                
+                let description = '';
+                if (leave.startDate === leave.endDate) {
+                    if (leave.startHalf === 'AM') description = `${startDate} (AM only)`;
+                    else if (leave.startHalf === 'PM') description = `${startDate} (PM only)`;
+                    else description = `${startDate} (Full day)`;
+                } else {
+                    description = `${startDate} → ${endDate}`;
+                }
+                
+                option.textContent = description;
+                cancelLeaveIdSelect.appendChild(option);
+            });
+        });
+
+        cancelLeaveIdSelect.addEventListener('change', () => {
+            if (cancelLeaveIdSelect.value) {
+                cancelBtn.classList.remove('hidden');
+                cancelBtn.disabled = false;
+            } else {
+                cancelBtn.classList.add('hidden');
+                cancelBtn.disabled = true;
+            }
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            const leaveText = cancelLeaveIdSelect.options[cancelLeaveIdSelect.selectedIndex].text;
+            const personName = cancelNameSelect.value;
+            
+            modalLeaveSummary.innerHTML = `<strong>${personName}</strong><br>${leaveText}`;
+            confirmModal.classList.remove('hidden');
+        });
+
+        modalCancelBtn.addEventListener('click', () => {
+            confirmModal.classList.add('hidden');
+        });
+
+        modalConfirmBtn.addEventListener('click', async () => {
+            const leaveId = cancelLeaveIdSelect.value;
+            
+            confirmModal.classList.add('hidden');
+            cancelBtn.disabled = true;
+            showMessage('Cancelling leave...', 'loading');
+
+            try {
+                const response = await fetch(DEPLOYMENT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'delete',
+                        leaveId: leaveId
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showMessage('✅ Leave cancelled successfully! Team has been notified.', 'success');
+                    
+                    cancelNameSelect.value = '';
+                    cancelLeaveIdSelect.innerHTML = '<option value="">-- Select leave to cancel --</option>';
+                    leaveSelectGroup.classList.add('hidden');
+                    cancelBtn.classList.add('hidden');
+                    
+                    setTimeout(() => loadLeavesFromSheet(), 1000);
+                } else {
+                    showMessage(result.error || 'Error cancelling leave.', 'error');
+                }
+            } catch (error) {
+                showMessage(`❌ Error: ${error.message}`, 'error');
+            } finally {
+                cancelBtn.disabled = false;
+            }
+        });
+
+        // ========== DATA LOADING ==========
         async function loadLeavesFromSheet() {
             try {
                 const response = await fetch(DEPLOYMENT_URL);
@@ -638,6 +920,8 @@
                     statusIndicator.classList.remove('disconnected');
                     statusIndicator.classList.add('connected');
                     statusText.textContent = `Connected - ${leaves.length} leave(s) found`;
+                    
+                    updateCancelNameDropdown();
                 }
             } catch (error) {
                 statusIndicator.classList.remove('connected');
@@ -649,6 +933,24 @@
             renderLeavesList();
         }
 
+        function updateCancelNameDropdown() {
+            const currentValue = cancelNameSelect.value;
+            
+            const uniqueNames = [...new Set(leaves.map(l => l.name))].sort();
+            
+            cancelNameSelect.innerHTML = '<option value="">-- Select your name --</option>';
+            uniqueNames.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                cancelNameSelect.appendChild(option);
+            });
+            
+            if (uniqueNames.includes(currentValue)) {
+                cancelNameSelect.value = currentValue;
+            }
+        }
+
         function showMessage(message, type) {
             messageContainer.innerHTML = `<div class="message ${type}">${message}</div>`;
             if (type === 'success') {
@@ -656,6 +958,7 @@
             }
         }
 
+        // ========== CALENDAR ==========
         prevMonthBtn.addEventListener('click', () => {
             currentDate.setMonth(currentDate.getMonth() - 1);
             renderCalendar();
