@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S-REIT Dividend Stripping Analyzer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #0f4c81;
+            --primary-light: #1a6bb5;
+            --accent: #00b4d8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f0f4f8;
+            --surface: #ffffff;
+            --surface-2: #f8fafc;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --text-light: #475569;
+            --text-muted: #94a3b8;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        .app-header { background: linear-gradient(135deg, #0f4c81 0%, #1a3a5c 100%); color: white; padding: 20px 28px 0; box-shadow: var(--shadow-lg); }
+        .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .app-title { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+        .app-subtitle { font-size: 12px; opacity: 0.7; margin-top: 3px; }
+        .data-badge { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); padding: 4px 12px; border-radius: 20px; font-size: 11px; }
+        .tabs { display: flex; gap: 4px; }
+        .tab { padding: 10px 20px; color: rgba(255,255,255,0.7); cursor: pointer; border-radius: 8px 8px 0 0; font-size: 14px; font-weight: 500; border: none; background: none; transition: all 0.2s; }
+        .tab:hover { color: white; background: rgba(255,255,255,0.1); }
+        .tab.active { color: var(--primary); background: var(--bg); }
+        .main { max-width: 1400px; margin: 0 auto; padding: 24px; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+        .card-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .card-title { font-size: 14px; font-weight: 600; }
+        .card-body { padding: 20px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: var(--surface); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); }
+        .stat-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; margin-bottom: 10px; }
+        .si-blue { background: #dbeafe; } .si-green { background: #dcfce7; } .si-amber { background: #fef3c7; } .si-purple { background: #ede9fe; } .si-red { background: #fee2e2; }
+        .stat-label { font-size: 11px; color: var(--text-light); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .stat-value { font-size: 24px; font-weight: 700; }
+        .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 300px; gap: 24px; }
+        @media (max-width: 1024px) { .dashboard-grid { grid-template-columns: 1fr; } }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { text-align: left; padding: 9px 14px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); background: var(--surface-2); border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none; }
+        th:hover { background: #eef2f7; }
+        th.sort-asc::after { content: " ↑"; } th.sort-desc::after { content: " ↓"; }
+        td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f8fafc; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .badge-green { background: #dcfce7; color: #15803d; }
+        .badge-amber { background: #fef3c7; color: #d97706; }
+        .badge-red { background: #fee2e2; color: #dc2626; }
+        .badge-blue { background: #dbeafe; color: #1d4ed8; }
+        .badge-gray { background: #f1f5f9; color: #475569; }
+        .badge-purple { background: #ede9fe; color: #7c3aed; }
+        .sector-pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+        .s-industrial { background: #dbeafe; color: #1d4ed8; }
+        .s-retail { background: #fce7f3; color: #9d174d; }
+        .s-office { background: #e0e7ff; color: #3730a3; }
+        .s-hospitality { background: #fef3c7; color: #92400e; }
+        .s-healthcare { background: #dcfce7; color: #15803d; }
+        .s-datacenter { background: #f3e8ff; color: #6d28d9; }
+        .s-mixed { background: #f1f5f9; color: #475569; }
+        .score-bar { width: 70px; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle; }
+        .score-fill { height: 100%; border-radius: 3px; }
+        .filters-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding: 12px 16px; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+        .search-input { padding: 7px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; width: 220px; outline: none; }
+        .search-input:focus { border-color: var(--primary-light); }
+        select.filter-select { padding: 7px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; background: white; cursor: pointer; outline: none; }
+        .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        @media (max-width: 768px) { .calc-grid { grid-template-columns: 1fr; } }
+        .form-group { margin-bottom: 14px; }
+        label { display: block; font-size: 12px; font-weight: 600; color: var(--text-light); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.3px; }
+        input[type="number"], select.form-control { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; outline: none; transition: border-color 0.2s; }
+        input[type="number"]:focus, select.form-control:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(26,107,181,0.1); }
+        .btn { padding: 10px 24px; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-light); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+        .pnl-card { border-radius: var(--radius); padding: 20px; margin-bottom: 12px; }
+        .pnl-green { background: linear-gradient(135deg, #059669, #10b981); color: white; }
+        .pnl-red { background: linear-gradient(135deg, #dc2626, #ef4444); color: white; }
+        .pnl-blue { background: linear-gradient(135deg, #0f4c81, #1a6bb5); color: white; }
+        .pnl-main { font-size: 32px; font-weight: 800; }
+        .pnl-label { font-size: 12px; opacity: 0.8; margin-bottom: 4px; }
+        .pnl-sub { font-size: 12px; opacity: 0.75; margin-top: 4px; }
+        .result-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+        .result-row:last-child { border-bottom: none; }
+        .result-row .label { color: var(--text-light); }
+        .result-row .value { font-weight: 600; }
+        .info-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13px; color: #1e40af; margin-bottom: 16px; line-height: 1.5; }
+        .warning-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13px; color: #92400e; margin-bottom: 16px; line-height: 1.5; }
+        .days-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 12px; white-space: nowrap; }
+        .db-urgent { background: #fee2e2; color: #dc2626; }
+        .db-soon { background: #fef3c7; color: #d97706; }
+        .db-future { background: #dcfce7; color: #15803d; }
+        .db-past { background: #f1f5f9; color: #94a3b8; }
+        .cal-item { display: grid; grid-template-columns: 90px 1fr 90px 90px 110px; gap: 12px; align-items: center; padding: 11px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: white; margin-bottom: 8px; transition: box-shadow 0.2s; }
+        .cal-item:hover { box-shadow: var(--shadow-md); }
+        .cal-item.past { opacity: 0.55; }
+        .cal-item.urgent { border-left: 3px solid var(--danger); }
+        .cal-item.soon { border-left: 3px solid var(--warning); }
+        .cal-item.future { border-left: 3px solid var(--success); }
+        .cal-date { font-size: 13px; font-weight: 700; color: var(--text); }
+        .cal-name { font-size: 13px; font-weight: 600; } .cal-ticker { font-size: 11px; color: var(--text-muted); }
+        .cal-dpu { font-size: 13px; font-weight: 600; color: var(--success); }
+        .cal-yield { font-size: 12px; color: var(--text-light); }
+        .edu-section { margin-bottom: 28px; }
+        .edu-section h3 { font-size: 16px; font-weight: 700; margin-bottom: 10px; color: var(--text); }
+        .edu-section p { font-size: 14px; color: var(--text-light); line-height: 1.75; margin-bottom: 10px; }
+        .edu-section ul { padding-left: 20px; }
+        .edu-section li { font-size: 14px; color: var(--text-light); line-height: 1.75; margin-bottom: 5px; }
+        .timeline { display: flex; margin: 20px 0; position: relative; }
+        .timeline::before { content: ''; position: absolute; top: 16px; left: 5%; right: 5%; height: 2px; background: var(--border); }
+        .timeline-step { flex: 1; text-align: center; position: relative; }
+        .timeline-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin: 0 auto 8px; position: relative; z-index: 1; }
+        .timeline-label { font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+        .timeline-sub { font-size: 10px; color: var(--text-muted); }
+        .section-gap { margin-bottom: 24px; }
+        .divider { height: 1px; background: var(--border); margin: 20px 0; }
+        .disclaimer { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 11px; color: var(--text-muted); margin-top: 20px; line-height: 1.6; }
+        .chart-wrap { position: relative; height: 220px; }
+        .ticker-link { font-weight: 700; color: var(--primary); font-size: 12px; }
+        .mb-16 { margin-bottom: 16px; }
+        .quick-picks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+        @media (max-width: 768px) { .quick-picks { grid-template-columns: 1fr; } .cal-item { grid-template-columns: 1fr 1fr; } }
+        .pick-card { background: var(--surface); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); border-top: 3px solid var(--primary); }
+        .pick-rank { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .pick-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+        .pick-ticker { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
+        .pick-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .pick-metric { background: var(--surface-2); border-radius: 6px; padding: 7px 10px; }
+        .pick-metric-label { font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+        .pick-metric-value { font-size: 15px; font-weight: 700; margin-top: 1px; }
+        .col-right { text-align: right; }
+        .no-results { padding: 40px; text-align: center; color: var(--text-muted); font-size: 14px; }
+        .scenario-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+        .scenario-tab { padding: 7px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; cursor: pointer; background: white; color: var(--text-light); transition: all 0.2s; }
+        .scenario-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .reit-detail-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+        .strip-score-big { text-align: center; background: var(--surface-2); border-radius: var(--radius-sm); padding: 12px 20px; min-width: 100px; }
+        .strip-score-num { font-size: 36px; font-weight: 800; }
+        .strip-score-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<div class="app-header">
+    <div class="header-top">
+        <div>
+            <div class="app-title">S-REIT Dividend Stripping Analyzer</div>
+            <div class="app-subtitle">Singapore REIT distribution capture strategy &mdash; educational tool</div>
+        </div>
+        <div class="data-badge">📊 Illustrative data &bull; Not financial advice</div>
+    </div>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('dashboard')">Dashboard</button>
+        <button class="tab" onclick="switchTab('directory')">REIT Directory</button>
+        <button class="tab" onclick="switchTab('calculator')">Strategy Calculator</button>
+        <button class="tab" onclick="switchTab('education')">How It Works</button>
+    </div>
+</div>
+
+<div class="main">
+
+    <!-- DASHBOARD TAB -->
+    <div id="tab-dashboard" class="tab-panel active">
+        <div class="stats-grid" id="stats-grid"></div>
+
+        <div class="section-gap">
+            <h3 style="font-size:15px;font-weight:700;margin-bottom:12px;">🏆 Top Strip Candidates</h3>
+            <div class="quick-picks" id="quick-picks"></div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div>
+                <h3 style="font-size:15px;font-weight:700;margin-bottom:12px;">📅 Ex-Dividend Calendar</h3>
+                <div id="cal-header" class="cal-item" style="background:var(--surface-2);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-light);">
+                    <span>Ex-Div Date</span><span>REIT</span><span>DPU (SGD)</span><span>Dist. Yield</span><span>Days Away</span>
+                </div>
+                <div id="calendar-list"></div>
+            </div>
+            <div>
+                <div class="card mb-16">
+                    <div class="card-header"><span class="card-title">Sector Breakdown</span><span style="font-size:11px;color:var(--text-muted)">by market cap</span></div>
+                    <div class="card-body">
+                        <div class="chart-wrap"><canvas id="sectorChart"></canvas></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-title">Avg Yield by Sector</span></div>
+                    <div class="card-body" id="sector-yield-list"></div>
+                </div>
+            </div>
+        </div>
+        <div class="disclaimer">⚠️ Data shown is illustrative and approximate. Prices, DPU, and dates are indicative only. Always verify with SGX announcements and company investor relations before making investment decisions. Past price behaviour does not guarantee future results.</div>
+    </div>
+
+    <!-- DIRECTORY TAB -->
+    <div id="tab-directory" class="tab-panel">
+        <div class="card">
+            <div class="filters-row">
+                <input class="search-input" type="text" placeholder="Search REIT name or ticker..." oninput="filterDirectory()" id="dir-search">
+                <select class="filter-select" onchange="filterDirectory()" id="dir-sector">
+                    <option value="all">All Sectors</option>
+                    <option value="Industrial">Industrial</option>
+                    <option value="Retail">Retail</option>
+                    <option value="Office">Office</option>
+                    <option value="Hospitality">Hospitality</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Data Centers">Data Centers</option>
+                    <option value="Mixed">Mixed</option>
+                </select>
+                <select class="filter-select" onchange="filterDirectory()" id="dir-sort">
+                    <option value="strip_score">Sort: Strip Score ↓</option>
+                    <option value="yield">Sort: Yield ↓</option>
+                    <option value="exdiv_date">Sort: Ex-Div Date ↑</option>
+                    <option value="market_cap">Sort: Market Cap ↓</option>
+                    <option value="recovery">Sort: Recovery Speed ↑</option>
+                </select>
+                <span id="dir-count" style="font-size:12px;color:var(--text-muted);margin-left:auto;"></span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>REIT</th>
+                            <th>Sector</th>
+                            <th>Price</th>
+                            <th>DPU (this)</th>
+                            <th>Dist. Yield</th>
+                            <th>Annual Yield</th>
+                            <th>Ex-Div Date</th>
+                            <th>Gearing</th>
+                            <th>P/NAV</th>
+                            <th>Avg Drop</th>
+                            <th>Recovery</th>
+                            <th>Strip Score</th>
+                            <th>Viability</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dir-tbody"></tbody>
+                </table>
+                <div id="dir-no-results" class="no-results" style="display:none">No REITs match your filters.</div>
+            </div>
+        </div>
+        <div class="disclaimer" style="margin-top:16px;">Strip Score combines: distribution yield (30%), price recovery speed (30%), market cap liquidity (15%), NAV discount (15%), gearing safety (10%). Score &ge;7 = strong candidate; 5–7 = moderate; &lt;5 = weak candidate for dividend stripping.</div>
+    </div>
+
+    <!-- CALCULATOR TAB -->
+    <div id="tab-calculator" class="tab-panel">
+        <div class="info-box">💡 This calculator estimates P&amp;L for a dividend stripping trade. Select a REIT, enter your investment amount, and choose your exit scenario. All figures are illustrative based on historical averages.</div>
+        <div class="calc-grid">
+            <div>
+                <div class="card">
+                    <div class="card-header"><span class="card-title">Trade Parameters</span></div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>Select REIT</label>
+                            <select class="form-control" id="calc-reit" onchange="updateCalc()"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Investment Amount (SGD)</label>
+                            <input type="number" id="calc-amount" value="50000" min="1000" step="1000" oninput="updateCalc()">
+                        </div>
+                        <div class="form-group">
+                            <label>Brokerage Rate (%)</label>
+                            <input type="number" id="calc-brokerage" value="0.28" min="0.05" max="1" step="0.01" oninput="updateCalc()">
+                        </div>
+                        <div class="form-group">
+                            <label>Exit Scenario</label>
+                            <div class="scenario-tabs" style="margin-top:6px;">
+                                <button class="scenario-tab active" onclick="setScenario('recovery',this)">Wait for Recovery</button>
+                                <button class="scenario-tab" onclick="setScenario('quick',this)">Quick Strip (sell on ex-div day)</button>
+                            </div>
+                        </div>
+                        <div id="calc-reit-info" style="margin-top:8px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div id="calc-results"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDUCATION TAB -->
+    <div id="tab-education" class="tab-panel">
+        <div class="card">
+            <div class="card-body" style="max-width:780px;">
+                <div class="edu-section">
+                    <h3>What is Dividend Stripping?</h3>
+                    <p>Dividend stripping (also called dividend capture) is a strategy where an investor buys a REIT unit <strong>shortly before the ex-dividend date</strong> to collect the distribution, then sells the unit afterwards. The goal is to pocket the distribution payment as additional income.</p>
+                    <p>For Singapore REITs, this strategy has nuances around price behaviour, tax treatment, and trading costs that make it different from equities in other markets.</p>
+                </div>
+
+                <div class="edu-section">
+                    <h3>The Distribution Timeline</h3>
+                    <div class="timeline">
+                        <div class="timeline-step">
+                            <div class="timeline-dot" style="background:#dbeafe;color:#1d4ed8;">📢</div>
+                            <div class="timeline-label">Announcement</div>
+                            <div class="timeline-sub">DPU declared<br>~4–6 weeks prior</div>
+                        </div>
+                        <div class="timeline-step">
+                            <div class="timeline-dot" style="background:#fef3c7;color:#d97706;">⭐</div>
+                            <div class="timeline-label">Buy Here</div>
+                            <div class="timeline-sub">Buy before<br>ex-div date</div>
+                        </div>
+                        <div class="timeline-step">
+                            <div class="timeline-dot" style="background:#fee2e2;color:#dc2626;">📅</div>
+                            <div class="timeline-label">Ex-Div Date</div>
+                            <div class="timeline-sub">Price drops ~DPU<br>Eligibility cutoff</div>
+                        </div>
+                        <div class="timeline-step">
+                            <div class="timeline-dot" style="background:#f3e8ff;color:#7c3aed;">📋</div>
+                            <div class="timeline-label">Record Date</div>
+                            <div class="timeline-sub">Registered<br>unitholders list</div>
+                        </div>
+                        <div class="timeline-step">
+                            <div class="timeline-dot" style="background:#dcfce7;color:#15803d;">💰</div>
+                            <div class="timeline-label">Payment Date</div>
+                            <div class="timeline-sub">DPU credited<br>~6–8 weeks after</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="edu-section">
+                    <h3>Two Exit Strategies</h3>
+                    <p><strong>Quick Strip (sell on ex-div day):</strong> Sell immediately after the ex-dividend date. You receive the DPU but absorb the price drop. Profit = DPU × (1 − avg_drop%) − trading costs. Works best for REITs where the market underreacts to the ex-div (drop &lt; 100% of DPU).</p>
+                    <p><strong>Wait for Recovery:</strong> Hold until the price recovers to your purchase price, then sell. You keep the full DPU and break even on the price. Profit ≈ DPU − round-trip trading costs. Risk: price may not recover, or recovery takes longer than expected.</p>
+                </div>
+
+                <div class="edu-section">
+                    <h3>Singapore Tax Advantages</h3>
+                    <ul>
+                        <li><strong>No dividend tax:</strong> Singapore individual tax residents pay no personal income tax on REIT distributions (unlike dividends from companies).</li>
+                        <li><strong>No capital gains tax:</strong> Singapore has no CGT, so gains from selling units are tax-free for individuals.</li>
+                        <li><strong>Foreign REITs on SGX:</strong> Some REITs distributing foreign-sourced income (e.g., UK, China, Australia assets) may have withholding taxes deducted at source before distribution. Check each REIT's prospectus.</li>
+                        <li><strong>GST:</strong> Brokerage fees are subject to 9% GST — factor this into your cost calculation.</li>
+                    </ul>
+                </div>
+
+                <div class="edu-section">
+                    <h3>Key Risks</h3>
+                    <ul>
+                        <li><strong>Price drop exceeds DPU:</strong> On the ex-div date, broader market movements can cause the price to drop more than the DPU, resulting in a net loss.</li>
+                        <li><strong>Slow recovery:</strong> If the price takes weeks or months to recover, capital is tied up and you face opportunity cost.</li>
+                        <li><strong>Illiquidity:</strong> Smaller REITs have wide bid-ask spreads, increasing effective trading costs significantly.</li>
+                        <li><strong>High gearing risk:</strong> REITs with gearing above 40% are more sensitive to interest rate changes, which can depress prices independently of the ex-div effect.</li>
+                        <li><strong>Currency risk:</strong> REITs distributing in USD, GBP, or AUD introduce FX risk on the distribution amount.</li>
+                        <li><strong>Tax residency:</strong> Non-resident individual investors face a 10% withholding tax on REIT distributions.</li>
+                    </ul>
+                </div>
+
+                <div class="edu-section">
+                    <h3>Trading Costs (SGX)</h3>
+                    <ul>
+                        <li>Brokerage: 0.18%–0.35% per trade (varies by broker)</li>
+                        <li>SGX Clearing Fee: 0.0325% of trade value (capped at SGD 600)</li>
+                        <li>SGX Access Fee: 0.0075% of trade value</li>
+                        <li>GST: 9% on brokerage fee</li>
+                        <li>Minimum lot size: 100 units</li>
+                        <li><strong>Total round-trip cost estimate: ~0.55%–0.80% of trade value</strong></li>
+                    </ul>
+                </div>
+
+                <div class="edu-section">
+                    <h3>What Makes a Good Strip Candidate?</h3>
+                    <ul>
+                        <li>High distribution per unit relative to price (high distribution yield)</li>
+                        <li>Historical price drop less than 100% of DPU on ex-div date</li>
+                        <li>Fast price recovery (within 1–2 weeks)</li>
+                        <li>High daily trading volume (tight bid-ask spread, easy to enter/exit)</li>
+                        <li>Trading at a discount to NAV (provides a margin of safety)</li>
+                        <li>Low gearing (less sensitive to rate movements)</li>
+                    </ul>
+                </div>
+
+                <div class="warning-box">⚠️ <strong>Disclaimer:</strong> This tool is for educational and analytical purposes only. It does not constitute financial advice. Past distribution patterns and price behaviour are not a reliable indicator of future results. Always conduct your own due diligence and consult a licensed financial adviser before making investment decisions.</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+const TODAY = new Date('2026-05-23');
+
+const SREITS = [
+  { ticker:'A17U', name:'Ascendas REIT', sector:'Industrial', price:2.72, nav:2.89, dpu_annual:0.1545, dpu_this:0.0770, frequency:'Semi-annual', exdiv_date:'2026-07-28', payment_date:'2026-09-12', gearing:37.2, market_cap:11800, avg_drop_pct:88, avg_recovery_days:10, currency:'SGD', notes:'SG\'s largest industrial REIT. Business parks, logistics, data centres across SG, AUS, UK, USA.' },
+  { ticker:'C38U', name:'CapitaLand Integrated Commercial Trust', sector:'Retail', price:2.06, nav:2.24, dpu_annual:0.1068, dpu_this:0.0534, frequency:'Semi-annual', exdiv_date:'2026-08-04', payment_date:'2026-09-18', gearing:39.1, market_cap:14600, avg_drop_pct:90, avg_recovery_days:12, currency:'SGD', notes:'SG\'s largest REIT by market cap. ION Orchard, Plaza Singapura, CapitaGreen, Bugis Junction.' },
+  { ticker:'N2IU', name:'Mapletree Pan Asia Commercial Trust', sector:'Mixed', price:1.28, nav:1.53, dpu_annual:0.0856, dpu_this:0.0428, frequency:'Semi-annual', exdiv_date:'2026-10-28', payment_date:'2026-12-10', gearing:37.6, market_cap:7800, avg_drop_pct:85, avg_recovery_days:14, currency:'SGD', notes:'Pan-Asia commercial REIT. VivoCity flagship. Assets in SG, HK, China, Japan, South Korea.' },
+  { ticker:'M44U', name:'Mapletree Logistics Trust', sector:'Industrial', price:1.38, nav:1.58, dpu_annual:0.0840, dpu_this:0.0210, frequency:'Quarterly', exdiv_date:'2026-06-30', payment_date:'2026-08-15', gearing:40.0, market_cap:7200, avg_drop_pct:82, avg_recovery_days:8, currency:'SGD', notes:'Pan-Asia logistics REIT. 185+ properties across 9 countries.' },
+  { ticker:'ME8U', name:'Mapletree Industrial Trust', sector:'Industrial', price:2.21, nav:2.41, dpu_annual:0.1348, dpu_this:0.0337, frequency:'Quarterly', exdiv_date:'2026-05-27', payment_date:'2026-07-01', gearing:37.5, market_cap:7400, avg_drop_pct:86, avg_recovery_days:7, currency:'SGD', notes:'Hi-tech buildings and data centres in SG and North America.' },
+  { ticker:'AJBU', name:'Keppel DC REIT', sector:'Data Centers', price:2.12, nav:1.75, dpu_annual:0.0996, dpu_this:0.0498, frequency:'Semi-annual', exdiv_date:'2026-05-26', payment_date:'2026-07-10', gearing:35.8, market_cap:5200, avg_drop_pct:94, avg_recovery_days:9, currency:'SGD', notes:'SG\'s first listed data centre REIT. Assets across Asia-Pacific and Europe.' },
+  { ticker:'J69U', name:'Frasers Centrepoint Trust', sector:'Retail', price:2.20, nav:2.35, dpu_annual:0.1202, dpu_this:0.0601, frequency:'Semi-annual', exdiv_date:'2026-09-05', payment_date:'2026-10-22', gearing:38.2, market_cap:4800, avg_drop_pct:88, avg_recovery_days:11, currency:'SGD', notes:'Suburban retail REIT. Causeway Point, Northpoint City, Waterway Point.' },
+  { ticker:'T82U', name:'Suntec REIT', sector:'Mixed', price:1.22, nav:1.88, dpu_annual:0.0724, dpu_this:0.0362, frequency:'Semi-annual', exdiv_date:'2026-09-14', payment_date:'2026-10-30', gearing:42.0, market_cap:3900, avg_drop_pct:80, avg_recovery_days:16, currency:'SGD', notes:'Suntec City Mall, convention centre, offices. Assets in AUS and UK.' },
+  { ticker:'C2PU', name:'Parkway Life REIT', sector:'Healthcare', price:3.68, nav:2.10, dpu_annual:0.1432, dpu_this:0.0716, frequency:'Semi-annual', exdiv_date:'2026-08-19', payment_date:'2026-10-01', gearing:35.4, market_cap:2900, avg_drop_pct:96, avg_recovery_days:6, currency:'SGD', notes:'Asia\'s largest healthcare REIT. Mt Elizabeth, Gleneagles, 50+ nursing homes in Japan.' },
+  { ticker:'K71U', name:'Keppel REIT', sector:'Office', price:0.88, nav:1.24, dpu_annual:0.0557, dpu_this:0.0278, frequency:'Semi-annual', exdiv_date:'2026-07-15', payment_date:'2026-09-05', gearing:41.3, market_cap:3200, avg_drop_pct:82, avg_recovery_days:14, currency:'SGD', notes:'Grade A office REIT in SG, AUS, South Korea. Deep NAV discount.' },
+  { ticker:'J91U', name:'ESR-LOGOS REIT', sector:'Industrial', price:0.365, nav:0.42, dpu_annual:0.0248, dpu_this:0.0124, frequency:'Semi-annual', exdiv_date:'2026-08-11', payment_date:'2026-09-25', gearing:41.0, market_cap:2800, avg_drop_pct:84, avg_recovery_days:12, currency:'SGD', notes:'New-economy and logistics REIT in SG and AUS.' },
+  { ticker:'JYEU', name:'Lendlease Global Commercial REIT', sector:'Mixed', price:0.605, nav:0.88, dpu_annual:0.0430, dpu_this:0.0215, frequency:'Semi-annual', exdiv_date:'2026-06-09', payment_date:'2026-07-24', gearing:36.2, market_cap:1400, avg_drop_pct:78, avg_recovery_days:18, currency:'SGD', notes:'313@somerset, Parkway Parade. 31% NAV discount.' },
+  { ticker:'TS0U', name:'OUE REIT', sector:'Mixed', price:0.265, nav:0.44, dpu_annual:0.0178, dpu_this:0.0089, frequency:'Semi-annual', exdiv_date:'2026-09-09', payment_date:'2026-10-24', gearing:40.8, market_cap:1200, avg_drop_pct:75, avg_recovery_days:20, currency:'SGD', notes:'OUE Downtown offices and Mandarin Orchard hotel.' },
+  { ticker:'SK6U', name:'Paragon REIT', sector:'Retail', price:0.925, nav:0.99, dpu_annual:0.0556, dpu_this:0.0278, frequency:'Semi-annual', exdiv_date:'2026-05-29', payment_date:'2026-07-14', gearing:33.1, market_cap:2700, avg_drop_pct:90, avg_recovery_days:10, currency:'SGD', notes:'Paragon (Orchard Rd) and The Clementi Mall. Formerly SPH REIT.' },
+  { ticker:'P40U', name:'Starhill Global REIT', sector:'Mixed', price:0.515, nav:0.72, dpu_annual:0.0376, dpu_this:0.0188, frequency:'Semi-annual', exdiv_date:'2026-07-22', payment_date:'2026-09-08', gearing:36.8, market_cap:1100, avg_drop_pct:76, avg_recovery_days:16, currency:'SGD', notes:'Wisma Atria, Ngee Ann City. Assets in MY, AUS, Japan.' },
+  { ticker:'CRPU', name:'Sasseur REIT', sector:'Retail', price:0.725, nav:0.94, dpu_annual:0.0628, dpu_this:0.0314, frequency:'Semi-annual', exdiv_date:'2026-10-14', payment_date:'2026-11-28', gearing:25.3, market_cap:900, avg_drop_pct:70, avg_recovery_days:22, currency:'SGD', notes:'China outlet mall REIT. EMA rental structure. Low gearing but China risk.' },
+  { ticker:'DCRU', name:'Digital Core REIT', sector:'Data Centers', price:0.755, nav:0.86, dpu_annual:0.0398, dpu_this:0.0100, frequency:'Quarterly', exdiv_date:'2026-06-16', payment_date:'2026-07-30', gearing:31.4, market_cap:1100, avg_drop_pct:88, avg_recovery_days:11, currency:'USD', notes:'US, Germany, Japan, SG data centres. Distributions in USD. Sponsor: Digital Realty.' },
+  { ticker:'MXNU', name:'Elite Commercial REIT', sector:'Office', price:0.425, nav:0.65, dpu_annual:0.0390, dpu_this:0.0195, frequency:'Semi-annual', exdiv_date:'2026-09-22', payment_date:'2026-11-06', gearing:43.2, market_cap:450, avg_drop_pct:72, avg_recovery_days:24, currency:'GBP', notes:'UK government-leased offices. Distributions in GBP. High gearing.' },
+  { ticker:'HMN', name:'CapitaLand Ascott Trust', sector:'Hospitality', price:0.895, nav:1.12, dpu_annual:0.0573, dpu_this:0.0287, frequency:'Semi-annual', exdiv_date:'2026-05-28', payment_date:'2026-07-12', gearing:38.6, market_cap:3700, avg_drop_pct:83, avg_recovery_days:13, currency:'SGD', notes:'World\'s largest hospitality trust. Serviced residences and hotels in 40+ cities.' },
+  { ticker:'J85', name:'CDL Hospitality Trusts', sector:'Hospitality', price:0.885, nav:1.17, dpu_annual:0.0488, dpu_this:0.0244, frequency:'Semi-annual', exdiv_date:'2026-06-03', payment_date:'2026-07-18', gearing:39.5, market_cap:1300, avg_drop_pct:80, avg_recovery_days:15, currency:'SGD', notes:'Stapled security. Hotels and serviced residences in SG, Europe, Australasia.' },
+];
+
+// ─── Utilities ──────────────────────────────────────────────────────────────
+function daysBetween(dateStr) {
+    const d = new Date(dateStr);
+    return Math.round((d - TODAY) / 86400000);
+}
+function fmtDate(dateStr) {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-SG', { day:'2-digit', month:'short', year:'numeric' });
+}
+function fmtSGD(n, dp=2) {
+    return (n >= 0 ? '' : '-') + 'S$' + Math.abs(n).toFixed(dp);
+}
+function fmtPct(n, dp=2) { return n.toFixed(dp) + '%'; }
+function annualYield(r) { return (r.dpu_annual / r.price) * 100; }
+function distYield(r) { return (r.dpu_this / r.price) * 100; }
+function pNav(r) { return r.price / r.nav; }
+function navDiscount(r) { return ((r.nav - r.price) / r.nav) * 100; }
+
+function calcStripScore(r) {
+    const y = annualYield(r);
+    const yScore = Math.min(10, y * 1.1); // 9.1% yield = 10
+    const rScore = Math.max(0, 10 - (r.avg_recovery_days - 5) * 0.35);
+    const lScore = Math.min(10, (Math.log10(r.market_cap) - 2) * 3.5);
+    const nd = navDiscount(r);
+    const dScore = Math.min(10, Math.max(0, 5 + nd * 0.22));
+    const gScore = Math.max(0, 10 - (r.gearing - 30) * 0.35);
+    return (yScore*0.30 + rScore*0.30 + lScore*0.15 + dScore*0.15 + gScore*0.10);
+}
+
+function scoreColor(s) {
+    if (s >= 7) return '#10b981';
+    if (s >= 5) return '#f59e0b';
+    return '#ef4444';
+}
+
+function viabilityLabel(r) {
+    const drop_pct = r.avg_drop_pct;
+    if (drop_pct < 82) return { label:'Strong', cls:'badge-green' };
+    if (drop_pct < 92) return { label:'Moderate', cls:'badge-amber' };
+    return { label:'Weak', cls:'badge-red' };
+}
+
+function sectorClass(sector) {
+    const m = { 'Industrial':'s-industrial','Retail':'s-retail','Office':'s-office','Hospitality':'s-hospitality','Healthcare':'s-healthcare','Data Centers':'s-datacenter','Mixed':'s-mixed' };
+    return m[sector] || 's-mixed';
+}
+
+function daysBadge(days) {
+    if (days < 0) return `<span class="days-badge db-past">Past</span>`;
+    if (days <= 7) return `<span class="days-badge db-urgent">${days}d ⚡</span>`;
+    if (days <= 30) return `<span class="days-badge db-soon">${days}d</span>`;
+    return `<span class="days-badge db-future">${days}d</span>`;
+}
+
+// ─── Dashboard ───────────────────────────────────────────────────────────────
+function renderStats() {
+    const avgYield = SREITS.reduce((a,r) => a + annualYield(r), 0) / SREITS.length;
+    const upcoming = SREITS.filter(r => { const d=daysBetween(r.exdiv_date); return d>=0 && d<=30; }).length;
+    const urgent = SREITS.filter(r => { const d=daysBetween(r.exdiv_date); return d>=0 && d<=7; }).length;
+    const topScore = Math.max(...SREITS.map(calcStripScore));
+    const avgGearing = SREITS.reduce((a,r) => a+r.gearing, 0) / SREITS.length;
+
+    document.getElementById('stats-grid').innerHTML = `
+        <div class="stat-card">
+            <div class="stat-icon si-blue">📋</div>
+            <div class="stat-label">S-REITs Tracked</div>
+            <div class="stat-value">${SREITS.length}</div>
+            <div class="stat-sub">across all sectors</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon si-green">💰</div>
+            <div class="stat-label">Avg Annual Yield</div>
+            <div class="stat-value">${avgYield.toFixed(1)}%</div>
+            <div class="stat-sub">indicative, based on unit price</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon si-amber">📅</div>
+            <div class="stat-label">Ex-Div (next 30d)</div>
+            <div class="stat-value">${upcoming}</div>
+            <div class="stat-sub">${urgent} within 7 days ⚡</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon si-purple">⭐</div>
+            <div class="stat-label">Best Strip Score</div>
+            <div class="stat-value">${topScore.toFixed(1)}</div>
+            <div class="stat-sub">out of 10.0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon si-red">📊</div>
+            <div class="stat-label">Avg Gearing</div>
+            <div class="stat-value">${avgGearing.toFixed(1)}%</div>
+            <div class="stat-sub">MAS limit: 50%</div>
+        </div>
+    `;
+}
+
+function renderQuickPicks() {
+    const sorted = [...SREITS].sort((a,b) => calcStripScore(b) - calcStripScore(a));
+    const medals = ['🥇','🥈','🥉'];
+    document.getElementById('quick-picks').innerHTML = sorted.slice(0,3).map((r,i) => {
+        const score = calcStripScore(r);
+        const days = daysBetween(r.exdiv_date);
+        return `
+        <div class="pick-card">
+            <div class="pick-rank">${medals[i]} Rank #${i+1} Strip Candidate</div>
+            <div class="pick-name">${r.name}</div>
+            <div class="pick-ticker">${r.ticker} &bull; ${r.sector} &bull; ${r.currency}</div>
+            <div class="pick-metrics">
+                <div class="pick-metric">
+                    <div class="pick-metric-label">Strip Score</div>
+                    <div class="pick-metric-value" style="color:${scoreColor(score)}">${score.toFixed(1)}</div>
+                </div>
+                <div class="pick-metric">
+                    <div class="pick-metric-label">Dist. Yield</div>
+                    <div class="pick-metric-value" style="color:#10b981">${fmtPct(distYield(r),2)}</div>
+                </div>
+                <div class="pick-metric">
+                    <div class="pick-metric-label">Ex-Div</div>
+                    <div class="pick-metric-value" style="font-size:12px">${fmtDate(r.exdiv_date)}</div>
+                </div>
+                <div class="pick-metric">
+                    <div class="pick-metric-label">Avg Recovery</div>
+                    <div class="pick-metric-value">${r.avg_recovery_days}d</div>
+                </div>
+            </div>
+            <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">${r.notes}</div>
+        </div>`;
+    }).join('');
+}
+
+function renderCalendar() {
+    const sorted = [...SREITS].sort((a,b) => new Date(a.exdiv_date) - new Date(b.exdiv_date));
+    const upcoming = sorted.filter(r => daysBetween(r.exdiv_date) >= -7);
+    const past = sorted.filter(r => daysBetween(r.exdiv_date) < -7);
+    const list = [...upcoming, ...past];
+
+    document.getElementById('calendar-list').innerHTML = list.map(r => {
+        const days = daysBetween(r.exdiv_date);
+        const cls = days < -7 ? 'past' : days <= 7 ? 'urgent' : days <= 30 ? 'soon' : 'future';
+        return `
+        <div class="cal-item ${cls}" style="cursor:pointer" onclick="goToCalc('${r.ticker}')">
+            <div><div class="cal-date">${fmtDate(r.exdiv_date)}</div><div style="font-size:10px;color:var(--text-muted)">${r.frequency}</div></div>
+            <div><div class="cal-name">${r.name}</div><div class="cal-ticker">${r.ticker} &bull; <span class="sector-pill ${sectorClass(r.sector)}">${r.sector}</span></div></div>
+            <div class="cal-dpu">${r.currency} ${r.dpu_this.toFixed(4)}</div>
+            <div class="cal-yield">${fmtPct(distYield(r),2)}</div>
+            <div>${daysBadge(days)}</div>
+        </div>`;
+    }).join('');
+}
+
+function renderSectorChart() {
+    const sectorMap = {};
+    SREITS.forEach(r => {
+        sectorMap[r.sector] = (sectorMap[r.sector]||0) + r.market_cap;
+    });
+    const labels = Object.keys(sectorMap);
+    const data = labels.map(l => sectorMap[l]);
+    const colors = ['#3b82f6','#ec4899','#8b5cf6','#f59e0b','#10b981','#06b6d4','#6b7280'];
+
+    const ctx = document.getElementById('sectorChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
+        options: { responsive:true, maintainAspectRatio:false, plugins: { legend: { position:'bottom', labels: { font:{size:11}, padding:10 } } } }
+    });
+}
+
+function renderSectorYield() {
+    const sectorYields = {};
+    const sectorCount = {};
+    SREITS.forEach(r => {
+        sectorYields[r.sector] = (sectorYields[r.sector]||0) + annualYield(r);
+        sectorCount[r.sector] = (sectorCount[r.sector]||0) + 1;
+    });
+    const items = Object.keys(sectorYields).map(s => ({ sector:s, yield: sectorYields[s]/sectorCount[s] })).sort((a,b)=>b.yield-a.yield);
+    document.getElementById('sector-yield-list').innerHTML = items.map(item => `
+        <div class="result-row">
+            <span class="label"><span class="sector-pill ${sectorClass(item.sector)}">${item.sector}</span></span>
+            <span class="value" style="color:#10b981">${fmtPct(item.yield,1)}</span>
+        </div>`).join('');
+}
+
+// ─── Directory ────────────────────────────────────────────────────────────────
+function filterDirectory() {
+    const search = document.getElementById('dir-search').value.toLowerCase();
+    const sector = document.getElementById('dir-sector').value;
+    const sort = document.getElementById('dir-sort').value;
+
+    let data = SREITS.filter(r => {
+        const matchSearch = !search || r.name.toLowerCase().includes(search) || r.ticker.toLowerCase().includes(search);
+        const matchSector = sector === 'all' || r.sector === sector || (sector === 'Mixed' && r.sector === 'Mixed');
+        return matchSearch && matchSector;
+    });
+
+    if (sort === 'strip_score') data.sort((a,b) => calcStripScore(b) - calcStripScore(a));
+    else if (sort === 'yield') data.sort((a,b) => annualYield(b) - annualYield(a));
+    else if (sort === 'exdiv_date') data.sort((a,b) => new Date(a.exdiv_date) - new Date(b.exdiv_date));
+    else if (sort === 'market_cap') data.sort((a,b) => b.market_cap - a.market_cap);
+    else if (sort === 'recovery') data.sort((a,b) => a.avg_recovery_days - b.avg_recovery_days);
+
+    document.getElementById('dir-count').textContent = `${data.length} REITs`;
+    const noResults = document.getElementById('dir-no-results');
+
+    if (data.length === 0) {
+        document.getElementById('dir-tbody').innerHTML = '';
+        noResults.style.display = 'block';
+        return;
+    }
+    noResults.style.display = 'none';
+
+    document.getElementById('dir-tbody').innerHTML = data.map(r => {
+        const score = calcStripScore(r);
+        const v = viabilityLabel(r);
+        const days = daysBetween(r.exdiv_date);
+        const pnav = pNav(r);
+        const nd = navDiscount(r);
+        const quickProfit = r.dpu_this * (1 - r.avg_drop_pct/100);
+        return `
+        <tr style="cursor:pointer" onclick="goToCalc('${r.ticker}')">
+            <td>
+                <div style="font-weight:700;font-size:13px">${r.name}</div>
+                <div style="font-size:11px;color:var(--text-muted)">${r.ticker} &bull; ${r.currency} &bull; ${r.frequency}</div>
+            </td>
+            <td><span class="sector-pill ${sectorClass(r.sector)}">${r.sector}</span></td>
+            <td style="font-weight:600">${r.currency === 'SGD' ? 'S$' : r.currency+' '}${r.price.toFixed(3)}</td>
+            <td style="font-weight:600;color:#10b981">${r.dpu_this.toFixed(4)}</td>
+            <td style="color:#10b981;font-weight:600">${fmtPct(distYield(r),2)}</td>
+            <td style="color:#0f4c81;font-weight:600">${fmtPct(annualYield(r),1)}</td>
+            <td>
+                <div style="font-weight:600;font-size:12px">${fmtDate(r.exdiv_date)}</div>
+                <div>${daysBadge(days)}</div>
+            </td>
+            <td>${r.gearing.toFixed(1)}% <span class="badge ${r.gearing > 40 ? 'badge-red' : r.gearing > 37 ? 'badge-amber' : 'badge-green'}" style="font-size:10px">${r.gearing > 40 ? 'High' : r.gearing > 37 ? 'Mid' : 'Low'}</span></td>
+            <td>
+                <div style="font-weight:600">${pnav.toFixed(2)}x</div>
+                <div style="font-size:11px;color:${nd > 0 ? '#10b981' : '#ef4444'}">${nd > 0 ? '-' : '+'}${Math.abs(nd).toFixed(1)}% ${nd > 0 ? 'disc' : 'prem'}</div>
+            </td>
+            <td>${r.avg_drop_pct}%</td>
+            <td>${r.avg_recovery_days}d</td>
+            <td>
+                <div style="display:flex;align-items:center;gap:6px">
+                    <div class="score-bar"><div class="score-fill" style="width:${score*10}%;background:${scoreColor(score)}"></div></div>
+                    <span style="font-weight:700;color:${scoreColor(score)}">${score.toFixed(1)}</span>
+                </div>
+            </td>
+            <td><span class="badge ${v.cls}">${v.label}</span></td>
+        </tr>`;
+    }).join('');
+}
+
+// ─── Calculator ───────────────────────────────────────────────────────────────
+let calcScenario = 'recovery';
+
+function setScenario(s, btn) {
+    calcScenario = s;
+    document.querySelectorAll('.scenario-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    updateCalc();
+}
+
+function goToCalc(ticker) {
+    switchTab('calculator');
+    const sel = document.getElementById('calc-reit');
+    if (sel) { sel.value = ticker; updateCalc(); }
+}
+
+function initCalcSelect() {
+    const sel = document.getElementById('calc-reit');
+    const sorted = [...SREITS].sort((a,b) => calcStripScore(b) - calcStripScore(a));
+    sel.innerHTML = sorted.map(r => `<option value="${r.ticker}">${r.ticker} – ${r.name}</option>`).join('');
+    updateCalc();
+}
+
+function updateCalc() {
+    const ticker = document.getElementById('calc-reit').value;
+    const r = SREITS.find(x => x.ticker === ticker);
+    if (!r) return;
+
+    const investment = parseFloat(document.getElementById('calc-amount').value) || 50000;
+    const brokPct = parseFloat(document.getElementById('calc-brokerage').value) || 0.28;
+    const LOT = 100;
+    const SGX_FEES = 0.04; // clearing + access fees %
+
+    const totalBuyPct = (brokPct + SGX_FEES) / 100;
+    const units = Math.floor(investment / (r.price * LOT)) * LOT;
+    const actualInvest = units * r.price;
+    const buyCost = actualInvest * totalBuyPct;
+    const dpuReceived = units * r.dpu_this;
+
+    let pnl, sellCost, exitPrice, exitDesc, holdingDays;
+
+    if (calcScenario === 'recovery') {
+        exitPrice = r.price;
+        holdingDays = r.avg_recovery_days;
+        exitDesc = `Hold ~${r.avg_recovery_days} days until price recovers`;
+    } else {
+        const drop = (r.avg_drop_pct / 100) * r.dpu_this;
+        exitPrice = r.price - drop;
+        holdingDays = 1;
+        exitDesc = `Sell on ex-div day (price drops ~${r.avg_drop_pct}% of DPU)`;
+    }
+
+    const saleProceeds = units * exitPrice;
+    sellCost = saleProceeds * totalBuyPct;
+    const priceGainLoss = saleProceeds - actualInvest;
+    pnl = dpuReceived + priceGainLoss - buyCost - sellCost;
+    const returnPct = units > 0 ? (pnl / actualInvest) * 100 : 0;
+    const annualized = units > 0 ? returnPct * (365 / Math.max(holdingDays, 1)) : 0;
+    const score = calcStripScore(r);
+    const days = daysBetween(r.exdiv_date);
+
+    document.getElementById('calc-reit-info').innerHTML = `
+        <div style="background:var(--surface-2);border-radius:var(--radius-sm);padding:12px 14px;font-size:12px;line-height:1.7">
+            <div style="font-weight:700;font-size:14px;margin-bottom:4px">${r.name} (${r.ticker})</div>
+            <div>${r.notes}</div>
+            <div style="margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">
+                <span>Price: <b>${r.currency === 'SGD' ? 'S$' : r.currency+' '}${r.price.toFixed(3)}</b></span>
+                <span>DPU: <b style="color:#10b981">${r.dpu_this.toFixed(4)}</b></span>
+                <span>Ex-Div: <b>${fmtDate(r.exdiv_date)}</b> (${daysBadge(days)})</span>
+                <span>Strip Score: <b style="color:${scoreColor(score)}">${score.toFixed(1)}/10</b></span>
+            </div>
+        </div>`;
+
+    if (units === 0) {
+        document.getElementById('calc-results').innerHTML = `<div class="warning-box">Investment amount is too small to purchase a minimum lot (100 units) at S$${r.price.toFixed(3)} per unit. Minimum required: S$${(r.price * LOT).toFixed(0)}.</div>`;
+        return;
+    }
+
+    const pnlClass = pnl >= 0 ? 'pnl-green' : 'pnl-red';
+    document.getElementById('calc-results').innerHTML = `
+        <div class="card">
+            <div class="card-header"><span class="card-title">📊 Trade Analysis — ${exitDesc}</span></div>
+            <div class="card-body">
+                <div class="pnl-card ${pnlClass}" style="margin-bottom:16px">
+                    <div class="pnl-label">Estimated Net P&L</div>
+                    <div class="pnl-main">${pnl >= 0 ? '+' : ''}${fmtSGD(pnl)}</div>
+                    <div class="pnl-sub">${returnPct >= 0 ? '+' : ''}${returnPct.toFixed(3)}% return &bull; ${annualized >= 0 ? '+' : ''}${annualized.toFixed(1)}% annualised</div>
+                </div>
+                <div class="result-row"><span class="label">Investment Amount</span><span class="value">${fmtSGD(investment)}</span></div>
+                <div class="result-row"><span class="label">Units Purchased</span><span class="value">${units.toLocaleString()} units (${units/LOT} lots)</span></div>
+                <div class="result-row"><span class="label">Actual Outlay</span><span class="value">${fmtSGD(actualInvest)}</span></div>
+                <div class="result-row"><span class="label">Buy Cost (brokerage + fees)</span><span class="value" style="color:var(--danger)">-${fmtSGD(buyCost)}</span></div>
+                <div class="divider"></div>
+                <div class="result-row"><span class="label">DPU Received</span><span class="value" style="color:#10b981">+${fmtSGD(dpuReceived)}</span></div>
+                <div class="result-row"><span class="label">Exit Price (est.)</span><span class="value">${r.currency === 'SGD' ? 'S$' : r.currency+' '}${exitPrice.toFixed(4)}</span></div>
+                <div class="result-row"><span class="label">Price Gain / Loss</span><span class="value" style="color:${priceGainLoss >= 0 ? '#10b981' : '#ef4444'}">${priceGainLoss >= 0 ? '+' : ''}${fmtSGD(priceGainLoss)}</span></div>
+                <div class="result-row"><span class="label">Sell Cost (brokerage + fees)</span><span class="value" style="color:var(--danger)">-${fmtSGD(sellCost)}</span></div>
+                <div class="divider"></div>
+                <div class="result-row"><span class="label" style="font-weight:700">Net P&L</span><span class="value" style="font-weight:700;color:${pnl>=0?'#10b981':'#ef4444'}">${pnl >= 0 ? '+' : ''}${fmtSGD(pnl)}</span></div>
+                <div class="result-row"><span class="label">Return %</span><span class="value" style="color:${returnPct>=0?'#10b981':'#ef4444'}">${returnPct.toFixed(3)}%</span></div>
+                <div class="result-row"><span class="label">Holding Period</span><span class="value">~${holdingDays} day${holdingDays===1?'':'s'}</span></div>
+                <div class="result-row"><span class="label">Annualised Return</span><span class="value" style="font-weight:700;color:${annualized>=0?'#10b981':'#ef4444'}">${annualized >= 0 ? '+' : ''}${annualized.toFixed(1)}%</span></div>
+                ${r.currency !== 'SGD' ? `<div class="warning-box" style="margin-top:12px">⚠️ This REIT distributes in <b>${r.currency}</b>. Actual SGD returns depend on prevailing FX rates at payment date. Factor in conversion costs.</div>` : ''}
+            </div>
+        </div>`;
+}
+
+// ─── Tabs ─────────────────────────────────────────────────────────────────────
+function switchTab(id) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    const tabs = ['dashboard','directory','calculator','education'];
+    const idx = tabs.indexOf(id);
+    document.querySelectorAll('.tab')[idx].classList.add('active');
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    renderStats();
+    renderQuickPicks();
+    renderCalendar();
+    renderSectorChart();
+    renderSectorYield();
+    filterDirectory();
+    initCalcSelect();
+});
+</script>
+</body>
+</html>
